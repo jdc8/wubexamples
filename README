@@ -1,0 +1,23 @@
+Introduction:
+=============
+
+This is a set of examples using the Wub webserver. You can find Wub at Google
+Code:
+
+    http://code.google.com/p/wub/
+
+These examples use the SVN Head version.
+
+Requirements to run the examples:
+=================================
+
+- Install wub, or a link to it, in this directory in a sub-directory called 'Wub'.
+
+- Install tcllib, or a link to it, in this directory in a subdirectory called
+  'tcllib'.
+
+Example 1: A file domain
+==========
+
+This example show how to configure Wub to let it serve static files from the
+file system.
