@@ -20,4 +20,13 @@ Example 1: A file domain
 ==========
 
 This example show how to configure Wub to let it serve static files from the
-file system.
+file system path docroot/html with URL /
+
+Example 2: A file domain with rewrites and browsing
+==========
+
+This example shows how Wub can be used to browse the file system. Try using URL
+/disk.
+
+Files in docroot/html are now mounted on URL /html. A rewrite allows them to be
+accessed from /.
