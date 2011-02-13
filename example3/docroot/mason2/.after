@@ -1,0 +1,7 @@
+[
+ set content "<html><head><title>Mason2 generated file</title></head><body><H1>Mason2 wrapped file</H1>"
+ append content [dict get $response -content]
+ append content "</body></html>"
+ dict set response content-type text/html
+ dict set response -content $content
+]

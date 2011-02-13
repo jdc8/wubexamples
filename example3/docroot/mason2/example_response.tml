@@ -1,0 +1,7 @@
+[dict set response -content "Date: [clock format [clock seconds]]<br>
+Tcl version: $::tcl_version<br>
+Platform info: <br><ul>
+[foreach k [lsort -dictionary [array names ::tcl_platform]] {
+    append txt "<li>$k = $::tcl_platform($k)</li>"
+} ; set txt]</ul>
+"]

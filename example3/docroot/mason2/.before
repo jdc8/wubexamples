@@ -1,0 +1,9 @@
+[
+ set ua [dict get $response user-agent] 
+ if {[string match "*Firefox*" $ua]} {
+     dict set response -code 404
+     return "Template not accessible with your browser: $ua"
+ } else {
+     dict set response -code 200
+ }
+]

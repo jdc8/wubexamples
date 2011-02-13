@@ -30,3 +30,21 @@ This example shows how Wub can be used to browse the file system. Try using URL
 
 Files in docroot/html are now mounted on URL /html. A rewrite allows them to be
 accessed from /.
+
+Example 3: Mason domain
+==========
+
+/mason/example.html
+       example.tml
+
+/mason2/.before             : Limit access (forbid using FireFox)
+
+        index.html          : An HTML file
+        index.tml           : A template file
+	example.tml         : A template file with template text
+	example_response.tml: A template file writing settting the response
+	query.tml           : A template file processing query arguments A and Q
+
+        .after              : Wrap generated contents
+
+        .notfound           : Report error when request could not be processed

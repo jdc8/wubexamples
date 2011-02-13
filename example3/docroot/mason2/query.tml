@@ -1,0 +1,17 @@
+[
+ dict set response content-type text/html
+ set query [Query parse $response]
+ dict set response -Query $query
+ foreach q {A Q} {
+     if {[dict exists $query $q]} {
+	 set $q [lindex [dict get $query $q] 0]
+     } else {
+	 set $q ""
+     }
+ }
+ return ""
+]
+Date: [clock format [clock seconds]]<br>
+Query = $query<br>
+Q = $Q<br>
+A = $A<br>

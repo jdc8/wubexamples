@@ -1,0 +1,5 @@
+Could not find file to process your request:<br><table>
+[set txt "" ; foreach k [lsort -dictionary [dict keys $response]] { 
+     append txt "<tr><td>$k</td><td>[dict get $response $k]</td></tr>" 
+} ; set txt]
+</table>
