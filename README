@@ -48,3 +48,10 @@ Example 3: Mason domain
         .after              : Wrap generated contents
 
         .notfound           : Report error when request could not be processed
+
+Example 4: Direct domain
+==========
+
+/namespace/default
+
+/object
