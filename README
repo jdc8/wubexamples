@@ -61,17 +61,25 @@ Example 5: Http commands
 
 /object
 
+Todo: need to test cache clear/delete with latest wub
+
 Example 6: Forms
 ==========
 
 /object
 
+Example 7: jQuery
+==========
+
+/object
+
+Todo: need to check timeentry example, timeEntry.png seems to be missing
+
 To do:
 ======
 
 Suspend/resume, thread
-Ajax
-jQ
+Ajax using jQuery
 Recaptcha
 Cookies
 
