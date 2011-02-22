@@ -77,18 +77,25 @@ oo::class create MyOODomain {
 	dict set req -title "MyDirectDomain: test galleria"
 	return $req	
     }
-    method /test_gallery { req } {
-	set dl {}
-	foreach img [glob docroot/images/*] {
-	    set img [file tail $img]
-	    lappend dl [dict create image /images/$img thumb /images/$img alt $img title $img]
-	}
-	lassign [jQ do_galleria $req $dl] req C
+
+    method /test_ajax { req } { 
+	set C [<div> id contents {}]
+	append C "<button type='button' onclick='load_contents();'>Reload</button>"
+	set req [Html script $req /scripts/ajax.js]
+	set req [jQ jquery $req]
+	set req [jQ ready $req "load_contents();"]
 	dict set req -content $C
 	dict set req content-type x-text/html-fragment
-	dict set req -title "MyDirectDomain: test galleria"
+	dict set req -title "MyDirectDomain: test post method"
 	return $req	
     }
+    method /test_ajax_callback { req } { 
+	set C [<h1> "Time is: [clock format [clock seconds]]"]
+	dict set req -content $C
+	dict set req content-type text/html
+	return $req
+    }
+
     method / { req } { 
 	set content [<p> "Default function for MyOODomain"]
 	set ml {}
