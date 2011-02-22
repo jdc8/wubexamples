@@ -8,11 +8,12 @@ oo::class create MyOODomain {
     constructor {args} {
     }
     method /test_timeentry { req } {
+	puts "timeentry"
 	set C [<p> [<input> type text id myTimeEntry size 10 {}]]
 	append C [<p> [<input> type text id myTimeEntry2 size 10 {}]]
 	set req [jQ theme $req start]
 	set req [jQ timeentry $req #myTimeEntry]
-	set req [jQ timeentry $req #myTimeEntry2 {show24Hours true showSeconds true}]
+	set req [jQ timeentry $req #myTimeEntry2 show24Hours true showSeconds true]
 	dict set req -content $C
 	dict set req content-type x-text/html-fragment
 	dict set req -title "MyDirectDomain: test post method"
