@@ -16,25 +16,23 @@ oo::class create MyOODomain {
 	set req [jQ timeentry $req #myTimeEntry2 show24Hours true showSeconds true]
 	dict set req -content $C
 	dict set req content-type x-text/html-fragment
-	dict set req -title "MyDirectDomain: test post method"
+	dict set req -title "MyDirectDomain: test timeentry"
 	return $req	
     }
     method /test_accordion { req } {
 	set d [dict create]
 	set C ""
-	set C [<div> id accordion [subst {
-	    [<h3> href \# "Section A"]
-	    [<div> "Contents for A"]
-	    [<h3> href \# "Section B"]
-	    [<div> "Contents for B"]
-	    [<h3> href \# "Section C"]
-	    [<div> "Contents for C"]
-	}]]
+	foreach img [glob docroot/images/*] {
+	    set img [file tail $img]
+	    append C [<h3> href \# "$img"]
+	    append C [<div> [<img> src /images/$img alt $img title $img]]
+	}
+	set C [<div> id accordion $C]
 	set req [jQ theme $req start]
 	set req [jQ accordion $req #accordion]
 	dict set req -content $C
 	dict set req content-type x-text/html-fragment
-	dict set req -title "MyDirectDomain: test post method"
+	dict set req -title "MyDirectDomain: test accordion"
 	return $req	
     }
     method /test_table_sorter { req } {
@@ -63,9 +61,33 @@ oo::class create MyOODomain {
 	dict set req -style [list /css/tablesorter.css {}]
 	dict set req -content $C
 	dict set req content-type x-text/html-fragment
-	dict set req -title "MyDirectDomain: test table sorter"
+	dict set req -title "MyDirectDomain: test styled table sorter"
 	return $req	
 	
+    }
+    method /test_galleria { req } {
+	set dl {}
+	foreach img [glob docroot/images/*] {
+	    set img [file tail $img]
+	    lappend dl [dict create image /images/$img thumb /images/$img alt $img title $img]
+	}
+	lassign [jQ do_galleria $req $dl] req C
+	dict set req -content $C
+	dict set req content-type x-text/html-fragment
+	dict set req -title "MyDirectDomain: test galleria"
+	return $req	
+    }
+    method /test_gallery { req } {
+	set dl {}
+	foreach img [glob docroot/images/*] {
+	    set img [file tail $img]
+	    lappend dl [dict create image /images/$img thumb /images/$img alt $img title $img]
+	}
+	lassign [jQ do_galleria $req $dl] req C
+	dict set req -content $C
+	dict set req content-type x-text/html-fragment
+	dict set req -title "MyDirectDomain: test galleria"
+	return $req	
     }
     method / { req } { 
 	set content [<p> "Default function for MyOODomain"]
