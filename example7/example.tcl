@@ -22,8 +22,7 @@ oo::class create MyOODomain {
     method /test_accordion { req } {
 	set d [dict create]
 	set C ""
-	foreach img [glob docroot/images/*] {
-	    set img [file tail $img]
+	foreach img [glob -tails -dir docroot/images *] {
 	    append C [<h3> href \# "$img"]
 	    append C [<div> [<img> src /images/$img alt $img title $img]]
 	}
@@ -67,8 +66,7 @@ oo::class create MyOODomain {
     }
     method /test_galleria { req } {
 	set dl {}
-	foreach img [glob docroot/images/*] {
-	    set img [file tail $img]
+	foreach img [glob -tails -dir docroot/images *] {
 	    lappend dl [dict create image /images/$img thumb /images/$img alt $img title $img]
 	}
 	lassign [jQ do_galleria $req $dl] req C
