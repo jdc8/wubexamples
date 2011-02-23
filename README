@@ -71,11 +71,14 @@ Example 7: jQuery
 
 /object
 
+Example 8: Suspend and resume
+==========
+
+/object
+
 To do:
 ======
 
-Suspend/resume, thread
-Ajax using jQuery
 Recaptcha
 Cookies
 
