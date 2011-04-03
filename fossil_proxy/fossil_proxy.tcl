@@ -4,6 +4,7 @@ package require OO
 package require Site
 package require Cookies
 package require Query
+
 package provide FossilProxy 1.0
 
 set ::API(Domains/FossilProxy) {
@@ -17,15 +18,16 @@ set ::API(Domains/FossilProxy) {
 oo::class create FossilProxy {
 
     method strip_prefix { path } {
-	variable prefix
-	if {[string length $prefix] && [string match "$prefix*" $path]} {
-	    set path [string range $path [string length $prefix] end]
-	}
+ 	variable prefix
+ 	if {[string length $prefix] && [string match "$prefix*" $path]} {
+ 	    set path [string range $path [string length $prefix] end]
+ 	}
 	return $path
     }
 
     method do { r } { 
 
+	variable prefix
 	variable fossil_dir
 	variable fossil_command
 
@@ -36,11 +38,12 @@ oo::class create FossilProxy {
 	    }
 	    append fr " HTTP/1.1\n"
 	} else {
-	    append fr [dict get $r -header]
+	    lassign [dict get $r -header] meth url ver
+	    set fr "$meth [my strip_prefix $url] $ver\n"
 	}
 	
 	dict for {k v} $r {
-	    switch -glob -- $k {
+	    switch -nocase -glob -- $k {
 		-* {}
 		default { append fr "$k: $v\n" }
 	    }
@@ -51,10 +54,13 @@ oo::class create FossilProxy {
 	
 	return [Httpd Thread {
 
+	    package require Cookies
+	    package require Dict
+
 	    if {[catch {exec $fossil_command http $fossil_dir << $fr} R]} {
 		error $R
 	    }
-	    
+
 	    set n 0
 	    set response 404
 	    set location ""
@@ -78,7 +84,7 @@ oo::class create FossilProxy {
 		    }
 		    "Set-Cookie:*" {
 			set cdict [lindex [Cookies parse4client [string trim [string range $l 11 end]]] 1]
-			set r [Cookies Add $r -path [dict get? $cdict -Path]  -name [dict get? $cdict -name] -value [dict get? $cdict -value] -expires "next month"]
+			set r [Cookies Add $r -path $prefix[dict get? $cdict -Path] -name [dict get? $cdict -name] -value [dict get? $cdict -value] -expires "next month"]
 		    }
 		}
 	    }
@@ -88,12 +94,19 @@ oo::class create FossilProxy {
 		set C [join [lrange [split $R \n] $n end] \n]
 	    }
 	    
+ 	    if {[string length $prefix] && [string match "text/html*" $content_type]} {
+ 		regsub -all { href=\"\/} $C " href=\"$prefix/" C
+ 		regsub -all { href=\'\/} $C " href='$prefix/" C
+ 		regsub -all { src=\"\/} $C " src=\"$prefix/" C
+ 		regsub -all { src=\'\/} $C " src='$prefix/" C
+ 	    }
+
 	    switch -exact -- $response {
 		200 {
 		    return [Http NoCache [Http Ok $r $C $content_type]]
 		}
 		302 {
-		    return [Http Redirect $r $location]
+		    return [Http Redirect $r $prefix$location]
 		}
 		404 {
 		    return [Http NotFound $r]
@@ -103,7 +116,7 @@ oo::class create FossilProxy {
 		}
 	    }
 
-	} r $r fr $fr fossil_dir $fossil_dir fossil_command $fossil_command]
+	} r $r fr $fr fossil_dir $fossil_dir fossil_command $fossil_command prefix $prefix]
     }
 
     constructor {args} {
