@@ -31,6 +31,7 @@ oo::class create FossilProxy {
 	variable fossil_dir
 	variable fossil_command
 
+	# Construct a HTTP request to send to 'fossil http', strip the prefix as fossil doesn't know about it
 	if {[dict get $r -method] eq "POST"} {
 	    set fr "POST [my strip_prefix [dict get $r -path]]"
 	    if {[dict exists $r -entity] && [string length [dict get $r -entity]]} {
@@ -41,26 +42,30 @@ oo::class create FossilProxy {
 	    lassign [dict get $r -header] meth url ver
 	    set fr "$meth [my strip_prefix $url] $ver\n"
 	}
-	
+	# Add headers to request
 	dict for {k v} $r {
 	    switch -nocase -glob -- $k {
 		-* {}
 		default { append fr "$k: $v\n" }
 	    }
 	}
+	# Add content to request
 	if {[dict exists $r -entity]} {
 	    append fr \n[dict get $r -entity]
 	}
 	
+	# Use a thread to process the request to avoid blocking on long running calls
 	return [Httpd Thread {
 
 	    package require Cookies
 	    package require Dict
 
+	    # Call fossil
 	    if {[catch {exec $fossil_command http $fossil_dir << $fr} R]} {
 		error $R
 	    }
 
+	    # Extract headers from response
 	    set n 0
 	    set response 404
 	    set location ""
@@ -83,17 +88,20 @@ oo::class create FossilProxy {
 			set location [string trim [string range $l 9 end]]
 		    }
 		    "Set-Cookie:*" {
+			# Pass on cookies, make sure to fix the path by adding prefix
 			set cdict [lindex [Cookies parse4client [string trim [string range $l 11 end]]] 1]
 			set r [Cookies Add $r -path $prefix[dict get? $cdict -Path] -name [dict get? $cdict -name] -value [dict get? $cdict -value] -expires "next month"]
 		    }
 		}
 	    }
 	    
+	    # Extract contents from response
 	    set C ""
 	    if {$content_found} {
 		set C [join [lrange [split $R \n] $n end] \n]
 	    }
 	    
+	    # Fix up prefixes if not mounted in /
  	    if {[string length $prefix] && [string match "text/html*" $content_type]} {
  		regsub -all { href=\"\/} $C " href=\"$prefix/" C
  		regsub -all { href=\'\/} $C " href='$prefix/" C
@@ -101,11 +109,13 @@ oo::class create FossilProxy {
  		regsub -all { src=\'\/} $C " src='$prefix/" C
  	    }
 
+	    # Send responses
 	    switch -exact -- $response {
 		200 {
 		    return [Http NoCache [Http Ok $r $C $content_type]]
 		}
 		302 {
+		    # Make sure to fix the path by adding prefix
 		    return [Http Redirect $r $prefix$location]
 		}
 		404 {
