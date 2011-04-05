@@ -98,25 +98,21 @@ oo::class create FossilProxy {
 	    log fr
 
 	    # Call fossil
-# 	    set fnm R$fnmid
-# 	    set f [open $fnm w]
-# 	    fconfigure $f -translation binary
-
- 	    fconfigure stdout -translation binary
-
+	    set fnm R$fnmid
+	    set f [open $fnm w]
+	    fconfigure $f -translation binary
 	    if {[catch {exec $fossil_command http $fossil_dir >@ $f << $fr} R]} {
 		log R
 		error $R
 	    }
+	    close $f
 
-# 	    close $f
+	    set f [open $fnm r]
+	    fconfigure $f -translation binary
+	    set R [read $f]
+	    close $f
 
-# 	    set f [open $fnm r]
-# 	    fconfigure $f -translation binary
-# 	    set R [read $f]
-# 	    close $f
-
-# 	    file delete $fnm
+	    file delete $fnm
 
 	    log R
 
