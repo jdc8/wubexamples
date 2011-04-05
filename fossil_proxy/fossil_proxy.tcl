@@ -25,23 +25,48 @@ oo::class create FossilProxy {
 	return $path
     }
 
+    method log {vnm} {
+	upvar $vnm v
+	set f [open fossil.log a]
+	puts $f "==== $vnm ================================================================================"
+	puts $f $v
+	close $f
+    }
+
+    method list_repositories {r} {
+	variable prefix
+	variable fossil_dir
+	set C [<h1> "Known repositories:\n"]
+	append C "<ul>\n"
+	foreach fnm [lsort -dictionary [glob -nocomplain -tails -dir $fossil_dir *.fossil]] {
+	    append C [<li> [<a> href $prefix/[file rootname $fnm] [file rootname $fnm]]]\n
+	}
+	append C "</ul>\n"
+	return [Http NoCache [Http Ok $r $C]]
+    }
+
     method do { r } { 
 
+	variable fnmid
 	variable prefix
 	variable fossil_dir
 	variable fossil_command
 
+	my log r
+
 	# Construct a HTTP request to send to 'fossil http', strip the prefix as fossil doesn't know about it
 	if {[dict get $r -method] eq "POST"} {
 	    set fr "POST [my strip_prefix [dict get $r -path]]"
-	    if {[dict exists $r -entity] && [string length [dict get $r -entity]]} {
-		append fr "?[dict get $r -entity]"
-	    }
 	    append fr " HTTP/1.1\n"
 	} else {
 	    lassign [dict get $r -header] meth url ver
-	    set fr "$meth [my strip_prefix $url] $ver\n"
+	    set url [my strip_prefix $url]
+	    if {$url eq "" && [file isdirectory $fossil_dir]} {
+		return [my list_repositories $r]
+	    }
+	    set fr "$meth $url $ver\n"
 	}
+	puts "fr=$fr"
 	# Add headers to request
 	dict for {k v} $r {
 	    switch -nocase -glob -- $k {
@@ -51,6 +76,7 @@ oo::class create FossilProxy {
 	}
 	# Add content to request
 	if {[dict exists $r -entity]} {
+ 	    puts "ENTITY LENGTH: [string length [dict get $r -entity]]"
 	    append fr \n[dict get $r -entity]
 	}
 	
@@ -60,16 +86,42 @@ oo::class create FossilProxy {
 	    package require Cookies
 	    package require Dict
 
+	    proc log {vnm} {
+		upvar $vnm v
+		set f [open fossil.log a]
+		puts $f "==== $vnm ================================================================================"
+		puts $f $v
+		close $f
+	    }
+	    
+	    log r
+	    log fr
+
 	    # Call fossil
-	    if {[catch {exec $fossil_command http $fossil_dir << $fr} R]} {
+	    set fnm R$fnmid
+	    set f [open $fnm w]
+	    fconfigure $f -translation binary
+	    if {[catch {exec $fossil_command http $fossil_dir >@ $f << $fr} R]} {
+		log R
 		error $R
 	    }
+	    close $f
+
+	    set f [open $fnm r]
+	    fconfigure $f -translation binary
+	    set R [read $f]
+	    close $f
+
+	    file delete $fnm
+
+	    log R
 
 	    # Extract headers from response
 	    set n 0
 	    set response 404
 	    set location ""
 	    set content_type "test/html"
+	    set content_length -1
 	    set content_found 0
 	    foreach l [split $R \n] {
 		incr n
@@ -84,6 +136,9 @@ oo::class create FossilProxy {
 		    "Content-Type:*" {
 			set content_type [string trim [string range $l 13 end]]
 		    }
+		    "Content-Length:*" {
+			set content_length [string trim [string range $l 15 end]]
+		    }
 		    "Location:*" {
 			set location [string trim [string range $l 9 end]]
 		    }
@@ -97,10 +152,13 @@ oo::class create FossilProxy {
 	    
 	    # Extract contents from response
 	    set C ""
-	    if {$content_found} {
-		set C [join [lrange [split $R \n] $n end] \n]
+	    puts "Content length [dict get $r -path] : $content_length"
+	    if {$content_length >= 0} {
+		set C [string range $R end-[expr {$content_length-1}] end]
 	    }
 	    
+	    log C
+
 	    # Fix up prefixes if not mounted in /
  	    if {[string length $prefix] && [string match "text/html*" $content_type]} {
  		regsub -all { href=\"\/} $C " href=\"$prefix/" C
@@ -126,10 +184,11 @@ oo::class create FossilProxy {
 		}
 	    }
 
-	} r $r fr $fr fossil_dir $fossil_dir fossil_command $fossil_command prefix $prefix]
+	} r $r fr $fr fossil_dir $fossil_dir fossil_command $fossil_command prefix $prefix fnmid [incr fnmid]]
     }
 
     constructor {args} {
+	variable fnmid 0
 	variable prefix ""
 	variable fossil_command "fossil"
 	variable {*}[Site var? FossilProxy] {*}$args ;# allow .ini file to modify defaults
