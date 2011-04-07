@@ -1,0 +1,75 @@
+#! /bin/sh
+#
+#	handle the fossil proxy server
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/home/jdc/wubfossil/fossil_proxy.tcl
+NAME=fossil_proxy
+DESC="Fossil Proxy"
+TCLSH=/usr/bin/tclsh
+STARTER="daemon"
+
+set -e
+ulimit -c 1000000
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC with $STARTER: "
+	if [ $STARTER = "daemon" ]; then
+	    /usr/bin/daemon --name=fossil_proxy \
+		--chdir=/home/jdc/wubfossil \
+		--dbglog=/var/log/wubfossil/fossil_proxy-daemon \
+		--user=jdc.jdc --umask=005 \
+		--respawn --inherit --core \
+		--verbose=1 --debug=1 \
+		--errlog=/var/log/wubfossil/fossil_proxy.err --output=/var/log/wubfossil/fossil_proxy.out \
+		--command="$TCLSH $DAEMON $DAEMON_OPTS"
+	else
+	    start-stop-daemon --start --quiet --background \
+		--chuid jdc:jdc \
+		--pidfile /var/run/$NAME.pid --make-pidfile \
+		--exec $TCLSH -- $DAEMON $DAEMON_OPTS
+	fi
+	echo "$NAME."
+	;;
+
+  stop)
+	echo -n "Stopping $DESC: "
+	if [ $STARTER = "daemon" ]; then
+	    /usr/bin/daemon --user jdc.jdc --name=fossil_proxy --stop
+	else
+	    start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+		--exec $TCLSH
+	fi
+	echo "$NAME."
+	;;
+
+  restart|force-reload)
+	#
+	#	If the "reload" option is implemented, move the "force-reload"
+	#	option to the "reload" entry above. If not, "force-reload" is
+	#	just the same as "restart".
+	#
+	echo -n "Restarting $DESC: "
+	if [ $STARTER = "daemon" ]; then
+	    /usr/bin/daemon --user jdc.jdc --name=fossil_proxy --restart
+	else
+	    start-stop-daemon --stop --quiet --pidfile \
+		/var/run/$NAME.pid --exec $TCLSH -- $DAEMON -- $DAEMON_OPTS
+	    sleep 1
+	    start-stop-daemon --start --quiet --pidfile \
+		/var/run/$NAME.pid --exec $TCLSH -- $DAEMON -- $DAEMON_OPTS
+	fi
+
+	echo "$NAME."
+	;;
+
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

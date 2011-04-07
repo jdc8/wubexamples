@@ -1,0 +1,3 @@
+MAILTO=jos.decoster@gmail.com
+
+0,15,30,45 * * * * /home/jdc/wubfossil/update.sh
