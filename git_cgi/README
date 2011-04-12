@@ -1,0 +1,14 @@
+To run gitweb under Wub I did the following:
+
+- download the git source and build the gitweb.cgi script
+
+  git clone git://git.kernel.org/pub/scm/git/git.git
+  cd git
+  make GITWEB_PROJECTROOT="/path/to/dir/with/repos" gitweb/gitweb.cgi
+  
+- copy the resulting gitweb.cgi to this directory
+
+- edit the gitweg.cgi script, look for all static/ string and replace them by
+  /static/
+
+- copy the gitweg/static directory to this directory

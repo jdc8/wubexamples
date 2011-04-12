@@ -81,8 +81,11 @@ Example 9: Recaptcha
 
 /object
 
-Example fossil proxy: Making your own domain
+Example fossil proxy: Making your own domain: a 'fossil http' wrapper
 =====================
+
+Example git_cgi: Example of using the CGI domain
+================
 
 To do:
 ======
